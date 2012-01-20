@@ -215,21 +215,21 @@ struct table:map<typename rowtype::keytype,rowtype>
 
 
 
+template <class row>
 
 struct tableDeleter
 {
-	
+	typedef row pkeytype;	
 	
 	
 };
 
-
-
-struct tableDeletable
+template <class row>
+struct tableReferedBy
 {
 	
-
-	virtual bool OnDeleteinRefered(tableDeleter * deleter,void * fk)
+	typedef row referingKey;
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)
 	{
 		return true;
 		
@@ -242,7 +242,7 @@ struct tableDeletable
 
 
 template <typename rowtype2,typename refrencedtabletype>
-struct table2:map<typename rowtype2::keytype,rowtype2> ,tableDeletable
+struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
@@ -313,7 +313,7 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableDeletable
 		 tableype::erase (i);
 	} 
 		
-	virtual bool OnDeleteinRefered(tableDeleter * deleter,void * fk)
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)
 	{
 		
 		for(tablerowiter i =tableype::begin(); i !=tableype::end(); i++)//XXX very slow
@@ -351,7 +351,7 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableDeletable
 
 
 template <typename rowtype2,typename refreningtabletype>
-struct table3:map<typename rowtype2::keytype,rowtype2>,tableDeleter
+struct table3:map<typename rowtype2::keytype,rowtype2>,tableDeleter<typename rowtype2::keytype>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
@@ -445,8 +445,21 @@ struct table3:map<typename rowtype2::keytype,rowtype2>,tableDeleter
 
 
 
+template <typename rowtype>
+struct tableReference 
+{
+	typedef rowtype foriegnkeyType;
+	
+	//bool OnDeleteinRefered(tableReference<foriegnkeyType> * deleter,foriegnkeyType fk);
+	
+	
+};
+
+
+
+
 template <typename rowtype2,typename refreningtabletype,typename refrencedtabletype>
-struct table4:map<typename rowtype2::keytype,rowtype2>,tableDeleter
+struct table4:map<typename rowtype2::keytype,rowtype2>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
@@ -528,7 +541,7 @@ struct table4:map<typename rowtype2::keytype,rowtype2>,tableDeleter
 		tableype::erase (i);
 	} 
 	
-	virtual bool OnDeleteinRefered(tableDeleter * deleter,void * fk)
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)
 	{
 		
 		for(tablerowiter i =tableype::begin(); i !=tableype::end(); i++)//XXX very slow
@@ -600,9 +613,12 @@ int main()
 	
 	
 	
-	table3<Player,tableDeletable> players;
+	table3<Player,tableReferedBy<Score> > players;
 	
-	table2<Score,table3<Player,tableDeletable> > scores(players);
+	table2<Score,table3<Player,tableReferedBy<Score> > > scores(players);
+	
+//	table3<Player,tablereferedby<Score> > players;
+//		table3<Score,tableReferes<Player> > players;
 	
 players.SetupReferencing(&scores);
 //	tablebase. ;//referenced  by other
