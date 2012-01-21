@@ -87,7 +87,7 @@ struct row2 {
 
 	
 	template <typename  refrencedtabletype>
-	bool foreignKeyvalidate(refrencedtabletype refrencedtable)
+	bool foreignKeyvalidate(refrencedtabletype & refrencedtable)
 	{
 		return (refrencedtable.contains(foriegnkey));
 	}
@@ -217,11 +217,14 @@ struct table:map<typename rowtype::keytype,rowtype>
 
 template <class row>
 
-struct tableDeleter
+struct tableReferer
 {
-	typedef row pkeytype;	
+	typedef typename row::keytype pkeytype;	
 	
-	
+	virtual bool contains(pkeytype fk)=0;
+//	{
+//		return false;
+//	}
 };
 
 template <class row>
@@ -246,7 +249,9 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
-	refrencedtabletype & refrencedtable;
+	
+	 refrencedtabletype & refrencedtable;
+	
 	
 	table2(refrencedtabletype & inrefrencedtable)
 	:refrencedtable(inrefrencedtable)
@@ -351,7 +356,7 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
 
 
 template <typename rowtype2,typename refreningtabletype>
-struct table3:map<typename rowtype2::keytype,rowtype2>,tableDeleter<typename rowtype2::keytype>
+struct table3:map<typename rowtype2::keytype,rowtype2>,tableReferer< rowtype2>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
@@ -615,11 +620,13 @@ int main()
 	
 	table3<Player,tableReferedBy<Score> > players;
 	
-	table2<Score,table3<Player,tableReferedBy<Score> > > scores(players);
+	
+	 //tableReferer<Player > * s  = &players;
+	
+	table2<Score,tableReferer<Player > > scores(players);
 	
 //	table3<Player,tablereferedby<Score> > players;
 //		table3<Score,tableReferes<Player> > players;
-	
 players.SetupReferencing(&scores);
 //	tablebase. ;//referenced  by other
 //	tabledepedent//refrences other
@@ -647,6 +654,6 @@ players.SetupReferencing(&scores);
 	
 	SHOULD_FAIL(scores.contains(5));
 	
-	
+
 	return 0;
 }
