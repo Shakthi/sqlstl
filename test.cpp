@@ -13,7 +13,10 @@
 #include <set>
 #include <map>
 #include <cassert>
+#include <tr1/tuple>
 using namespace std;
+
+using namespace std::tr1;
 
 template <typename _keytype>
 struct row {
@@ -116,6 +119,10 @@ struct Player:row<int> {
 
 
 
+
+
+
+
 struct Score:row2<int,Player> {
 	int score()
 	{
@@ -215,34 +222,253 @@ struct table:map<typename rowtype::keytype,rowtype>
 
 
 
+
+
+
+struct tableReferedByP
+{
+	
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)=0;
+	
+};
+
+
+
 template <class row>
 
-struct tableReferer
+struct tableForiegn
 {
 	typedef typename row::keytype pkeytype;	
+	std::set<tableReferedByP * > referset;
 	
 	virtual bool contains(pkeytype fk)=0;
-//	{
-//		return false;
-//	}
 };
+
+
 
 template <class row>
 struct tableReferedBy
 {
 	
 	typedef row referingKey;
-	virtual bool OnDeleteinRefered(void * deleter,void * fk)
-	{
-		return true;
-		
-	}
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)=0;
+//	{
+//		return true;
+//		
+//	}
 	
 
 
 
 };
 
+
+
+
+template <typename _keytype,typename foriegnrowtype>
+struct rowf {
+	
+	
+	typedef _keytype keytype;
+	typedef foriegnrowtype  foriegnkeytuple; 
+	
+	keytype primarykey;
+	foriegnkeytuple foriegnkey;
+	
+	bool operator < (const rowf & u)const
+	{
+		return primarykey < u.primarykey;
+	}
+	
+	
+	rowf(keytype k,const foriegnkeytuple & fk)
+	:primarykey(k),foriegnkey(fk)
+	{
+		
+	}
+	
+	
+	bool validate()
+	{
+		return true;
+	}
+	
+	
+//	template<typename tupleforiegntype,int index,typename ftype>
+//	struct checkhelper;	
+	
+	
+	template<typename tupleforiegntype,int index,typename fktype>
+	struct checkhelper {
+		static bool foreignKeyvalidatef(tupleforiegntype intupleforiegn,fktype fk)
+		{
+			
+			typename std::tr1::tuple_element<index,tupleforiegntype>::type foriengtable = get<index>(intupleforiegn);
+			
+			
+			typedef typename std::tr1::tuple_element<index,foriegnrowtype>::type fk1type;
+			
+			const fk1type  fk1= get<index>(fk);
+			
+			
+			return foriengtable->contains(fk1);
+			
+		}
+		
+	};
+	
+	
+	
+	
+	template<typename tupleforiegntype,typename fktype>
+	struct checkhelper<tupleforiegntype,0,fktype> {
+		static bool foreignKeyvalidatef(tupleforiegntype intupleforiegn,fktype fk)
+		{
+			
+			typename std::tr1::tuple_element<0,tupleforiegntype>::type foriengtable = get<0>(intupleforiegn);
+			
+			
+			typedef typename std::tr1::tuple_element<0,foriegnrowtype>::type fk1type;
+			
+			const fk1type  fk1= get<0>(fk);
+			
+			
+			return foriengtable->contains(fk1);
+			
+		}
+		
+	};
+	
+	
+	
+	
+	template <typename  refrencedtabletype >
+	bool foreignKeyvalidate(refrencedtabletype & refrencedtable)
+	{
+		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
+		return checkhelper<refrencedtabletype,tuplesize-1,foriegnkeytuple>::foreignKeyvalidatef(refrencedtable,foriegnkey);
+	}
+	
+	
+	
+	
+};
+
+
+
+typedef tuple<int> rowfi;
+
+struct Player2:rowf<int,rowfi > {
+	int playerid()
+	{
+		return primarykey;
+	}
+	
+	Player2(int playerid,string name)
+	:rowf<int,rowfi>(playerid,make_tuple(playerid)),name(name)
+	{}
+	string name;
+};
+
+
+
+
+template <typename rowtype,typename tupletypeforiegntype>
+struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableForiegn<rowtype>
+{
+	
+	tupletypeforiegntype tupleforiegn;
+	typedef table2plus<rowtype,tupletypeforiegntype> selftype;
+	typedef typename map<typename rowtype::keytype,rowtype>::iterator tablerowiter;
+	typedef map<typename rowtype::keytype,rowtype> tableype;
+	
+	template<typename tupleforiegntype,size_t i,typename selftypet>
+	struct setTupleReferencehelper;
+	
+	template<typename tupleforiegntype,typename selftypet>
+	struct setTupleReferencehelper<tupleforiegntype,0,selftypet> {
+		static void setTupleReference(tupleforiegntype intupleforiegn,selftypet * inself)
+		{
+			
+			typename std::tr1::tuple_element<0,tupleforiegntype>::type foriengtable = get<0>(inself->tupleforiegn);
+			
+			foriengtable->referset.insert(inself);
+			
+		}
+		
+	};
+	
+	
+	
+	template<typename tupleforiegntype,size_t i,typename selftypet>
+	struct setTupleReferencehelper {
+		static void setTupleReference(tupleforiegntype intupleforiegn,selftypet * inself)
+		{
+			
+			typename std::tr1::tuple_element<i,tupleforiegntype>::type foriengtable = get<i>(inself->tupleforiegn);
+			
+			foriengtable->referset.insert(inself);
+			
+			setTupleReferencehelper<tupleforiegntype,i-1,selftypet>::setTupleReference(intupleforiegn,inself);
+		}
+		
+	};
+	
+	
+
+		
+	
+	
+	
+	
+	
+	table2plus(tupletypeforiegntype intupleforiegn)
+	:tupleforiegn(intupleforiegn)
+	{
+		const size_t size=  tuple_size<tupletypeforiegntype>::value;
+		setTupleReferencehelper<tupletypeforiegntype,size-1,selftype >::setTupleReference(intupleforiegn,this);
+	
+	}
+	
+	tablerowiter findrow(typename rowtype::keytype key)
+	{
+		return tableype::find(key);
+	}
+	
+	
+	
+	bool contains(typename rowtype::keytype key)
+	{
+		return findrow(key) != tableype::end();
+	}
+	
+	
+	
+	
+	virtual bool OnDeleteinRefered(void * deleter,void * fk)
+	{
+	
+		return false;
+	}
+	
+	
+	bool insert(rowtype inrow)
+	{
+		
+		if(inrow.validate() == false)
+			return false;
+		
+		if(inrow.foreignKeyvalidate(tupleforiegn) == false)
+			return false;
+		
+		
+		
+		pair<tablerowiter,bool> a = tableype::insert (make_pair(inrow.primarykey, inrow));
+		return a.second;
+	}
+	
+	
+};
 
 template <typename rowtype2,typename refrencedtabletype>
 struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
@@ -356,7 +582,7 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
 
 
 template <typename rowtype2,typename refreningtabletype>
-struct table3:map<typename rowtype2::keytype,rowtype2>,tableReferer< rowtype2>
+struct table3:map<typename rowtype2::keytype,rowtype2>,tableForiegn< rowtype2>
 {
 	
 	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
@@ -450,153 +676,6 @@ struct table3:map<typename rowtype2::keytype,rowtype2>,tableReferer< rowtype2>
 
 
 
-template <typename rowtype>
-struct tableReference 
-{
-	typedef rowtype foriegnkeyType;
-	
-	//bool OnDeleteinRefered(tableReference<foriegnkeyType> * deleter,foriegnkeyType fk);
-	
-	
-};
-
-
-
-
-template <typename rowtype2,typename refreningtabletype,typename refrencedtabletype>
-struct table4:map<typename rowtype2::keytype,rowtype2>
-{
-	
-	typedef map<typename rowtype2::keytype,rowtype2> tableype ;
-	
-	typedef typename rowtype2::keytype  pkeytype ;
-	
-	refreningtabletype * refreningtable;
-	refrencedtabletype & refrencedtable;
-	
-	table4(refrencedtabletype & inrefrencedtable)
-	:refrencedtable(inrefrencedtable)
-	{}
-	
-	
-	void SetupReferencing(refreningtabletype * inrefreningtabletype)
-	{
-		refreningtable = inrefreningtabletype;
-	}
-	
-	typedef typename tableype::iterator tablerowiter ;
-	bool insert(rowtype2 inrow)
-	{
-		
-		if(inrow.validate() == false)
-			return false;
-		
-		if(inrow.foreignKeyvalidate(refrencedtable) == false)
-			return false;
-		
-		pair<tablerowiter,bool> a = tableype::insert (make_pair(inrow.primarykey, inrow));
-		return a.second;
-	}
-	
-	
-	bool update(rowtype2 inrow)
-	{
-		
- 		if(inrow.validate() == false)
-			return false;
-		
-		tablerowiter iter =find(inrow.primarykey);
-		
-		if(iter == tableype::end())
-			return false;
-		
-		*iter = inrow;
-	}
-	
-	
-	bool insertorupdate(rowtype2 inrow)
-	{
-		if(update(inrow))
-			return true;
-		
-		if(insert(inrow))
-			return true;
-		
-		return false;
-	}
-	
-	
-	tablerowiter findrow(typename rowtype2::keytype key)
-	{
-		return tableype::find(key);
-	}
-	
-	
-	
-	bool contains(typename rowtype2::keytype key)
-	{
-		return findrow(key) != tableype::end();
-	}
-	
-	
-	
-	template<class T>
-	void OnDelete(typename T::pkeytype fk,const T &treftable,tablerowiter i)
-	{
-		tableype::erase (i);
-	} 
-	
-	virtual bool OnDeleteinRefered(void * deleter,void * fk)
-	{
-		
-		for(tablerowiter i =tableype::begin(); i !=tableype::end(); i++)//XXX very slow
-		{
-			rowtype2 rowss=i->second;
-			
-			if((void*)deleter == &refrencedtable)
-			{
-				typedef typename refrencedtabletype::pkeytype fkt;
-				
-				if(rowss.foriegnkey == *((fkt*)fk))
-				{
-					OnDelete(rowss.foriegnkey,refrencedtable,i);
-					//tableype::erase (i);
-					
-				}	
-				
-				
-				
-				
-			}
-			
-			
-			
-			
-		}
-		
-		return true;
-	}
-	
-	
-	bool deleteKey(typename rowtype2::keytype key)
-	{
-		assert(refreningtable);
-		
-		assert(contains(key));
-		tableype::erase (findrow(key));
-		
-		
-		if(refreningtable->OnDeleteinRefered(this,&key))
-		{
-			return true;
-		}
-		
-		return false;
-	}
-	
-	
-};
-
 
 
 
@@ -605,29 +684,25 @@ struct table4:map<typename rowtype2::keytype,rowtype2>
 #define SHOULDNOT_WORK false
 
 
-#define SHOULD_PASS(x) assert((x) == SHOULD_WORK);
-#define SHOULD_FAIL(x) assert((x) == SHOULDNOT_WORK);
-
+#define SHOULD_PASS(x) assert((x) );
+#define SHOULD_FAIL(x) assert(!(x) );
 
 
 
 
 int main()
 {
-	
+//	sss s(s);
+//	//tuple<Player> a;
 	
 	
 	
 	table3<Player,tableReferedBy<Score> > players;
-	
-	
-	 //tableReferer<Player > * s  = &players;
-	
-	table2<Score,tableReferer<Player > > scores(players);
+	table2<Score,tableForiegn<Player > > scores(players);
 	
 //	table3<Player,tablereferedby<Score> > players;
 //		table3<Score,tableReferes<Player> > players;
-players.SetupReferencing(&scores);
+    players.SetupReferencing(&scores);
 //	tablebase. ;//referenced  by other
 //	tabledepedent//refrences other
 
@@ -635,10 +710,30 @@ players.SetupReferencing(&scores);
 //	tabledepedent
 	
 	
+	//typedef tuple<tableReferedBy<Player> *> refer;
 	
+	
+	
+	table2plus<Player2,tuple<tableForiegn<Player2>* > > b(make_tuple(&b));
+
+	//b.setRefer(&b);
+	
+//table2plus<Player,refer,foriegn > t(make_tuple(tmuu,yy));
+	
+	
+	
+//	tableind,tabledepend,tablebase,table
+	
+//	table<PLYER>
 	
 //	table<Score,table<Player>> scores(players);
+
 	
+	
+//#if 0
+	
+	
+	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
 	SHOULD_PASS(players.insert(Player(1,"shakthi")));
 	SHOULD_PASS(players.insert(Player(2,"shakthi")));
 	
