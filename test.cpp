@@ -497,24 +497,9 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 		
 		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
 		{
-			OnDeleteHelper<tupletypeforiegntype,index-1,selftype >::OnDeleteinRefered(deleter,fk,ft,_self);
-
+			typedef typename tuple_element<index,tupleforiegntype>::type tt;
 			
-		}
-		
-	};
-	
-	
-	
-	template<typename tupleforiegntype,typename _selftype>
-	struct OnDeleteHelper<tupleforiegntype,0,_selftype> {
-		
-		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
-		{
-			
-			typedef typename tuple_element<0,tupleforiegntype>::type tt;
-			
-			tableForiegnBase*  table = static_cast<tableForiegnBase*>(get<0>(ft));
+			tableForiegnBase*  table = static_cast<tableForiegnBase*>(get<index>(ft));
 			
 			//printf("sucess %x %x\n",table,deleter);
 			
@@ -528,31 +513,85 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 					
 					//printf("sucess\n");
 					
-					typedef typename fkatindex<0>::type t;
+					typedef typename fkatindex<index>::type t;
 					
-					t fk0= fkatindex<0>::getfk(i);
+					t fk0= fkatindex<index>::getfk(i);
+					
+					t converted = *(static_cast<t*>(fk)); 
+					
+					if(converted==fk0)
+					{
+						
+						if(_self->OnDelete(converted,get<index>(ft),i) ==false)
+							return false;
+						
+						break;
+					}
+					
+				}	
+				
+				
+				
+			}
+			
+			
+			
+			
+			return OnDeleteHelper<tupletypeforiegntype,index-1,selftype >::OnDeleteinRefered(deleter,fk,ft,_self);
+
+			
+		}
+		
+	};
+	
+	
+	
+	template<typename tupleforiegntype,typename _selftype>
+	struct OnDeleteHelper<tupleforiegntype,0,_selftype> {
+		
+		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
+		{
+			const int index=0;
+			typedef typename tuple_element<index,tupleforiegntype>::type tt;
+			
+			tableForiegnBase*  table = static_cast<tableForiegnBase*>(get<index>(ft));
+			
+			//printf("sucess %x %x\n",table,deleter);
+			
+			
+			if(table == deleter)
+			{
+				
+				for(tablerowiter i =_self->tableype::begin();  i !=_self->tableype::end(); i++)
+				{
+					rowtype rowss=i->second;
+					
+					//printf("sucess\n");
+					
+					typedef typename fkatindex<index>::type t;
+					
+					t fk0= fkatindex<index>::getfk(i);
 					
 					t converted = *(static_cast<t*>(fk)); 
 					
 					if(converted==fk0)
 					{
 					
-						_self->OnDelete(converted,get<0>(ft),i);
+						if(_self->OnDelete(converted,get<index>(ft),i) ==false)
+							return false;
+						
+						break;
 					}
-		//			typedef typename tuple_element<index,rowtype>::type type;
-
-					
-					int i;
-					i++;
 					
 				}	
 			
 					
-
 			
 			}
 			
+			return true;
 			
+
 		}
 		
 	};
@@ -583,7 +622,7 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 		
 		const size_t size=  tuple_size<tupletypeforiegntype>::value;
 		if(size>0)
-			OnDeleteHelper<tupletypeforiegntype,size-1,selftype >::OnDeleteinRefered(deleter,fk,tupleforiegn,this);
+			return OnDeleteHelper<tupletypeforiegntype,size-1,selftype >::OnDeleteinRefered(deleter,fk,tupleforiegn,this);
 		
 		
 		return true;
@@ -636,9 +675,11 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 				return false;
 		}
 		
-		tableype::erase (findrow(key));
+		tablerowiter k=findrow(key);
+		if(k!=tableype::end())
+			tableype::erase (k);
 
-		
+		return true;
 	}
 
 	
