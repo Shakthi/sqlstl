@@ -384,6 +384,17 @@ struct Player2:rowf<int,rowfi > {
 
 
 
+struct Score2:rowf<int,tuple<int> > {
+		
+	Score2(int score,int  playerid)
+	:rowf<int,tuple<int> >(score,make_tuple(playerid))
+	{}
+};
+
+
+
+
+
 
 
 template <typename rowtype,typename tupletypeforiegntype>
@@ -397,6 +408,19 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 	
 	template<typename tupleforiegntype,size_t i,typename selftypet>
 	struct setTupleReferencehelper;
+	
+	template<int index>
+	struct fkatindex {
+		typedef typename tuple_element<index,typename rowtype::foriegnkeytuple>::type type;
+		
+		static type getfk(tablerowiter i)
+		{
+			rowtype row = i->second;
+			
+			
+			return get<index>(row.foriegnkey);
+		}
+	};
 	
 	template<typename tupleforiegntype,typename selftypet>
 	struct setTupleReferencehelper<tupleforiegntype,0,selftypet> {
@@ -480,19 +504,6 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 //	template<int index>
 //	typename tuple_element<index,foriegnrowtype>::type	getForiegKeyForIndex()
 
-
-	template<int index>
-	struct fkatindex {
-		typedef typename tuple_element<index,typename rowtype::foriegnkeytuple>::type type;
-		
-		static type getfk(tablerowiter i)
-		{
-			rowtype row = i->second;
-			
-			
-			return get<index>(row.foriegnkey);
-		}
-	};
 	
 	
 	template<class T,typename fktype>
@@ -853,29 +864,12 @@ struct table3:map<typename rowtype2::keytype,rowtype2>,tableForiegn< rowtype2>
 
 int main()
 {
-//	sss s(s);
-//	//tuple<Player> a;
-	
-	
-	
-	table3<Player,tableReferedBy<Score> > players;
-	table2<Score,tableForiegn<Player > > scores(players);
-	
-//	table3<Player,tablereferedby<Score> > players;
-//		table3<Score,tableReferes<Player> > players;
-    players.SetupReferencing(&scores);
-//	tablebase. ;//referenced  by other
-//	tabledepedent//refrences other
 
-//	tablemix. ;
-//	tabledepedent
-	
-	
-	//typedef tuple<tableReferedBy<Player> *> refer;
-	
-	
-	
 	table2plus<Player2,tuple<tableForiegn<Player2>* > > b(make_tuple(&b));
+	
+	
+	table2plus<Score2,tuple<tableForiegn<Player2>* > > s(make_tuple(&b));
+
 
 	//b.setRefer(&b);
 	
@@ -903,22 +897,29 @@ int main()
 	SHOULD_PASS(b.insert(Player2(6,"shakthi")));
 	
 	
+	SHOULD_PASS(s.insert(Score2(100,1)));
+				
+	SHOULD_FAIL(s.insert(Score2(200,2)));
+	SHOULD_PASS(s.insert(Score2(200,6)));
+	
 	SHOULD_PASS(b.deleteKey(1));
+	SHOULD_FAIL(s.insert(Score2(300,4)));
 	
-	SHOULD_PASS(players.insert(Player(1,"shakthi")));
-	SHOULD_PASS(players.insert(Player(2,"shakthi")));
 	
-	SHOULD_FAIL(players.insert(Player(2,"shakthi"))) ;
-	
-
-	SHOULD_PASS(scores.insert(Score(3,1)))
-	SHOULD_PASS(scores.insert(Score(5,2)))
-	
-	SHOULD_PASS(scores.contains(5));
-	
-	players.deleteKey(2);
-	
-	SHOULD_FAIL(scores.contains(5));
+//	//SHOULD_PASS(players.insert(Player(1,"shakthi")));
+//	SHOULD_PASS(players.insert(Player(2,"shakthi")));
+//	
+//	SHOULD_FAIL(players.insert(Player(2,"shakthi"))) ;
+//	
+//
+//	//SHOULD_PASS(scores.insert(Score(3,1)))
+//	SHOULD_PASS(scores.insert(Score(5,2)))
+//	
+//	SHOULD_PASS(scores.contains(5));
+//	
+//	players.deleteKey(2);
+//	
+//	SHOULD_FAIL(scores.contains(5));
 	
 
 	return 0;
