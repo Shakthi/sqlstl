@@ -314,9 +314,8 @@ struct rowf {
 			const fk1type  fk1= get<index-1>(fk);
 			
 			
-			if(foriengtable->contains(fk1) == false);
-			return false;
-		
+			if(foriengtable->contains(fk1) == false)
+		    	return false;
 			
 			return checkhelper<tupleforiegntype,index-1,fktype>::foreignKeyvalidatef(intupleforiegn,fk);
 
@@ -365,7 +364,8 @@ struct rowf {
 
 
 
-typedef tuple<> rowfi;
+
+typedef tuple<int> rowfi;
 
 struct Player2:rowf<int,rowfi > {
 	int playerid()
@@ -374,10 +374,11 @@ struct Player2:rowf<int,rowfi > {
 	}
 	
 	Player2(int playerid,string name)
-	:rowf<int,rowfi>(playerid,make_tuple()),name(name)
+	:rowf<int,rowfi>(playerid,make_tuple(playerid)),name(name)
 	{}
 	string name;
 };
+
 
 
 
@@ -414,7 +415,7 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 		static void setTupleReference(tupleforiegntype intupleforiegn,selftypet * inself)
 		{
 			
-			typename std::tr1::tuple_element<i,tupleforiegntype>::type foriengtable = get<i-1>(inself->tupleforiegn);
+			typename std::tr1::tuple_element<i-1,tupleforiegntype>::type foriengtable = get<i-1>(inself->tupleforiegn);
 			
 			foriengtable->referset.insert(inself);
 			
@@ -441,6 +442,20 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 	
 	tablerowiter findrow(typename rowtype::keytype key)
 	{
+		
+		
+//		for(tablerowiter i =tableype::begin();  i !=tableype::end(); i++)
+//		{
+//			rowtype rowss=i->second;
+//			
+//			if(key == i->first)
+//				return i;
+//			
+//			
+//		}
+		
+		
+		
 		return tableype::find(key);
 	}
 	
@@ -860,7 +875,7 @@ int main()
 	
 	
 	
-	table2plus<Player2,tuple<> > b(make_tuple());
+	table2plus<Player2,tuple<tableForiegn<Player2>* > > b(make_tuple(&b));
 
 	//b.setRefer(&b);
 	
@@ -877,6 +892,10 @@ int main()
 	
 	
 //#if 0
+	
+	Player2 P(3,"shakthi");
+	
+	b.insert(P); 
 	
 	
 	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
