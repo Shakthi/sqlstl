@@ -33,6 +33,11 @@ struct tableReferedByP
 };
 
 
+template <typename T*>
+struct dref {
+	typedef T type;
+};
+
 
 template <class row>
 
@@ -42,6 +47,8 @@ struct tableForiegn:tableForiegnBase
 	std::set<tableReferedByP * > referset;
 	
 	virtual bool contains(pkeytype fk)=0;
+	
+	//bool primaryKeyType(pkeytype )
 };
 
 
@@ -102,6 +109,32 @@ struct rowf {
 			
 		}
 		
+		static bool foreignKeyvalidatefType(tupleforiegntype intupleforiegn)
+		{
+			
+			typename std::tr1::tuple_element<index-1,tupleforiegntype>::type foriengtable = get<index-1>(intupleforiegn);
+			
+			
+			typedef typename std::tr1::tuple_element<index-1,tupleforiegntype>::type ffsff;
+			
+			typedef typename dref<ffsff>::type ttt; 
+			
+			
+			typedef typename std::tr1::tuple_element<index-1,foriegnrowtype>::type fk1type;
+			
+	//		const fk1type  fk1= get<index-1>(fk);
+//			
+//			
+//			if(foriengtable->contains(fk1) == false)
+//		    	return false;
+			
+	//		return checkhelper<tupleforiegntype,index-1,fktype>::foreignKeyvalidatef(intupleforiegn,fk);
+			
+			
+		}
+		
+		
+		
 	};
 	
 	
@@ -114,6 +147,14 @@ struct rowf {
 			return true;
 			
 		}
+		
+		
+		static bool foreignKeyvalidatefType(tupleforiegntype intupleforiegn)
+		{
+			return true;
+			
+		}
+		
 		
 	};
 	
@@ -135,6 +176,15 @@ struct rowf {
 	{
 		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
 		return checkhelper<refrencedtabletype,tuplesize,foriegnkeytuple>::foreignKeyvalidatef(refrencedtable,foriegnkey);
+	}
+
+	
+	
+	template <typename  refrencedtabletype >
+	bool foreignKeyvalidateType(refrencedtabletype & refrencedtable)
+	{
+		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
+		return checkhelper<refrencedtabletype,tuplesize,foriegnkeytuple>::foreignKeyvalidatefType(refrencedtable);
 	}
 	
 	
@@ -223,7 +273,13 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 			
 			foriengtable->referset.insert(inself);
 			
+			
+			typedef typename rowtype::foriegnkeytuple fkt;
 			setTupleReferencehelper<tupleforiegntype,i-1,selftypet>::setTupleReference(intupleforiegn,inself);
+			
+			
+
+			
 		}
 		
 	};
@@ -241,6 +297,9 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 	{
 		const size_t size=  tuple_size<tupletypeforiegntype>::value;
 		setTupleReferencehelper<tupletypeforiegntype,size,selftype >::setTupleReference(intupleforiegn,this);
+		
+		rowtype::foreignKeyvalidateType(intupleforiegn);
+
 	
 	}
 	
