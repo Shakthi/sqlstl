@@ -221,14 +221,17 @@ struct table:map<typename rowtype::keytype,rowtype>
 };
 
 
+struct tableForiegnBase
+{
 
+};
 
 
 
 struct tableReferedByP
 {
 	
-	virtual bool OnDeleteinRefered(void * deleter,void * fk)=0;
+	virtual bool OnDeleteinRefered(tableForiegnBase * deleter,void * fk)=0;
 	
 };
 
@@ -236,7 +239,7 @@ struct tableReferedByP
 
 template <class row>
 
-struct tableForiegn
+struct tableForiegn:tableForiegnBase
 {
 	typedef typename row::keytype pkeytype;	
 	std::set<tableReferedByP * > referset;
@@ -318,6 +321,13 @@ struct rowf {
 	};
 	
 	
+	
+	template<int index>
+	typename tuple_element<index,foriegnrowtype>::type	getForiegKeyForIndex()
+	{
+		return  get<index>(foriegnkey);
+
+	}
 	
 	
 	template<typename tupleforiegntype,typename fktype>
@@ -426,6 +436,7 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 	:tupleforiegn(intupleforiegn)
 	{
 		const size_t size=  tuple_size<tupletypeforiegntype>::value;
+		if(size>0)
 		setTupleReferencehelper<tupletypeforiegntype,size-1,selftype >::setTupleReference(intupleforiegn,this);
 	
 	}
@@ -445,11 +456,143 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 	
 	
 	
-	virtual bool OnDeleteinRefered(void * deleter,void * fk)
-	{
 	
-		return false;
+	template<class T>
+	void OnDelete(typename T::pkeytype fk,const T &treftable,tablerowiter i)
+	{
+		tableype::erase (i);
+	} 
+	
+	
+//	template<int index>
+//	typename tuple_element<index,foriegnrowtype>::type	getForiegKeyForIndex()
+
+
+	template<int index>
+	struct fkatindex {
+		typedef typename tuple_element<index,typename rowtype::foriegnkeytuple>::type type;
+		
+		static type getfk(tablerowiter i)
+		{
+			rowtype row = i->second;
+			
+			
+			return get<index>(row.foriegnkey);
+		}
+	};
+	
+	
+	template<class T,typename fktype>
+	bool  OnDelete(fktype fk,const T &treftable,tablerowiter i)
+	{
+		tableype::erase (i);
+		return true;
+	} 
+	
+	
+	
+	
+	template<typename tupleforiegntype,int index,typename _selftype>
+	struct OnDeleteHelper {
+		
+		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
+		{
+			OnDeleteHelper<tupletypeforiegntype,index-1,selftype >::OnDeleteinRefered(deleter,fk,ft,_self);
+
+			
+		}
+		
+	};
+	
+	
+	
+	template<typename tupleforiegntype,typename _selftype>
+	struct OnDeleteHelper<tupleforiegntype,0,_selftype> {
+		
+		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
+		{
+			
+			typedef typename tuple_element<0,tupleforiegntype>::type tt;
+			
+			tableForiegnBase*  table = static_cast<tableForiegnBase*>(get<0>(ft));
+			
+			//printf("sucess %x %x\n",table,deleter);
+			
+			
+			if(table == deleter)
+			{
+				
+				for(tablerowiter i =_self->tableype::begin();  i !=_self->tableype::end(); i++)
+				{
+					rowtype rowss=i->second;
+					
+					//printf("sucess\n");
+					
+					typedef typename fkatindex<0>::type t;
+					
+					t fk0= fkatindex<0>::getfk(i);
+					
+					t converted = *(static_cast<t*>(fk)); 
+					
+					if(converted==fk0)
+					{
+					
+						_self->OnDelete(converted,get<0>(ft),i);
+					}
+		//			typedef typename tuple_element<index,rowtype>::type type;
+
+					
+					int i;
+					i++;
+					
+				}	
+			
+					
+
+			
+			}
+			
+			
+		}
+		
+	};
+	
+	
+	
+	virtual bool OnDeleteinRefered(tableForiegnBase * deleter,void * fk)
+	{
+		
+//		for(tablerowiter i =tableype::begin(); i !=tableype::end(); i++)
+//		{
+//			rowtype2 rowss=i->second;
+//			
+//			if((void*)deleter == &refrencedtable)
+//			{
+//				typedef typename refrencedtabletype::pkeytype fkt;
+//				
+//				if(rowss.foriegnkey == *((fkt*)fk))
+//				{
+//					OnDelete(rowss.foriegnkey,refrencedtable,i);
+//					//tableype::erase (i);
+//					
+//				}	
+//			}
+//		}
+		
+		
+		
+		const size_t size=  tuple_size<tupletypeforiegntype>::value;
+		if(size>0)
+			OnDeleteHelper<tupletypeforiegntype,size-1,selftype >::OnDeleteinRefered(deleter,fk,tupleforiegn,this);
+		
+		
+		return true;
 	}
+	
+	
+	
+	
+	
 	
 	
 	bool insert(rowtype inrow)
@@ -458,15 +601,46 @@ struct table2plus:map<typename rowtype::keytype,rowtype> ,tableReferedByP,tableF
 		if(inrow.validate() == false)
 			return false;
 		
-		if(inrow.foreignKeyvalidate(tupleforiegn) == false)
-			return false;
+		
 		
 		
 		
 		pair<tablerowiter,bool> a = tableype::insert (make_pair(inrow.primarykey, inrow));
-		return a.second;
+		
+		if(a.second==false)
+			return false;
+		
+		
+		if(inrow.foreignKeyvalidate(tupleforiegn) == false)
+		{
+			tableype::erase(inrow.primarykey);
+			return false;
+		}	
+		
+		return true;
 	}
 	
+	
+	
+	bool deleteKey(typename rowtype::keytype key)
+	{
+		//assert(refreningtable);
+		
+		assert(contains(key));
+		
+		typedef typename std::set<tableReferedByP * >::iterator referediter;
+		
+		for(referediter i= tableForiegn<rowtype>::referset.begin(); i!= tableForiegn<rowtype>::referset.end(); i++)
+		{
+			if((*i)->OnDeleteinRefered(this,&key) == false)
+				return false;
+		}
+		
+		tableype::erase (findrow(key));
+
+		
+	}
+
 	
 };
 
@@ -561,15 +735,7 @@ struct table2:map<typename rowtype2::keytype,rowtype2> ,tableReferedBy<rowtype2>
 					//tableype::erase (i);
 					
 				}	
-				
-				
-				
-			
 			}
-			
-
-
-
 		}
 					
 		return true;
@@ -734,6 +900,12 @@ int main()
 	
 	
 	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(4,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(6,"shakthi")));
+	
+	
+	SHOULD_PASS(b.deleteKey(1));
+	
 	SHOULD_PASS(players.insert(Player(1,"shakthi")));
 	SHOULD_PASS(players.insert(Player(2,"shakthi")));
 	
