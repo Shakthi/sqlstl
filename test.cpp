@@ -33,11 +33,6 @@ struct tableReferedByP
 };
 
 
-template <typename T*>
-struct dref {
-	typedef T type;
-};
-
 
 template <class row>
 
@@ -48,7 +43,10 @@ struct tableForiegn:tableForiegnBase
 	
 	virtual bool contains(pkeytype fk)=0;
 	
-	//bool primaryKeyType(pkeytype )
+	 bool primaryKeyType(pkeytype *)
+	{
+		return true;
+	}
 };
 
 
@@ -117,10 +115,14 @@ struct rowf {
 			
 			typedef typename std::tr1::tuple_element<index-1,tupleforiegntype>::type ffsff;
 			
-			typedef typename dref<ffsff>::type ttt; 
-			
-			
+//			typedef typename dref<ffsff>::type ttt; 
+//			
+//			
 			typedef typename std::tr1::tuple_element<index-1,foriegnrowtype>::type fk1type;
+			
+			
+			return foriengtable->primaryKeyType((fk1type*)0);
+			
 			
 	//		const fk1type  fk1= get<index-1>(fk);
 //			
@@ -181,7 +183,7 @@ struct rowf {
 	
 	
 	template <typename  refrencedtabletype >
-	bool foreignKeyvalidateType(refrencedtabletype & refrencedtable)
+	static bool foreignKeyvalidateType(refrencedtabletype & refrencedtable)
 	{
 		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
 		return checkhelper<refrencedtabletype,tuplesize,foriegnkeytuple>::foreignKeyvalidatefType(refrencedtable);
