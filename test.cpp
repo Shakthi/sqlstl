@@ -25,25 +25,22 @@ struct tableForiegnBase
 
 
 
-struct tableReferedByP
+struct tableReferedBy
 {
-	
-	virtual bool OnDeleteinRefered(tableForiegnBase * deleter,void * fk)=0;
-	
+	virtual bool OnDelete(tableForiegnBase * deleter,void * foreignKeyPtr)=0;
 };
 
 
 
-template <class row>
-
+template <class tableTupleType>
 struct tableForiegn:tableForiegnBase
 {
-	typedef typename row::primaryKeyType pprimaryKeyType;	
-	std::set<tableReferedByP * > referset;
+	typedef typename tableTupleType::primaryKeyType primaryKeyType;	
+	std::set<tableReferedBy * > referedTables;
 	
-	virtual bool contains(pprimaryKeyType fk)=0;
+	virtual bool contains(primaryKeyType fk)=0;
 	
-	 bool primaryprimaryKeyType(pprimaryKeyType *)
+	 bool hasPrimaryKeyType(primaryKeyType *)
 	{
 		return true;
 	}
@@ -80,59 +77,40 @@ struct tableTuple {
 	{
 		return true;
 	}
+
 	
-	
-//	template<typename tupleforiegntype,int index,typename ftype>
-//	struct checkhelper;	
-	
-	
-	template<typename tupleforiegntype,int index,typename fktype>
-	struct checkhelper {
-		static bool foreignKeyvalidatef(tupleforiegntype intupleforiegn,fktype fk)
+	template<typename foreignTablesType,int index>
+	struct validateForeignKeyHelper 
+	{
+		static bool validateForeignKey(foreignTablesType inForeignTable,foreignKeysType inForeignKeys)
 		{
 			
-			typename std::tr1::tuple_element<index-1,tupleforiegntype>::type foriengtable = get<index-1>(intupleforiegn);
+			typename std::tr1::tuple_element<index-1,foreignTablesType>::type foreignTable = get<index-1>(inForeignTable);
 			
 			
-			typedef typename std::tr1::tuple_element<index-1,foreignKeysType>::type fk1type;
+			typedef typename std::tr1::tuple_element<index-1,foreignKeysType>::type foreignKeyType;
 			
-			const fk1type  fk1= get<index-1>(fk);
+			const foreignKeyType foreignKey = get<index-1>(inForeignKeys);
 			
 			
-			if(foriengtable->contains(fk1) == false)
+			if(foreignTable->contains(foreignKey) == false)
 		    	return false;
 			
-			return checkhelper<tupleforiegntype,index-1,fktype>::foreignKeyvalidatef(intupleforiegn,fk);
+			return validateForeignKeyHelper<foreignTablesType,index-1>::validateForeignKey(inForeignTable,inForeignKeys);
 
 			
 		}
 		
-		static bool foreignKeyvalidatefType(tupleforiegntype intupleforiegn)
+		static bool validateForeignKeyType(foreignTablesType inForeignTables)
 		{
-			
-			typename std::tr1::tuple_element<index-1,tupleforiegntype>::type foriengtable = get<index-1>(intupleforiegn);
-			
-			
-			typedef typename std::tr1::tuple_element<index-1,tupleforiegntype>::type ffsff;
-			
-//			typedef typename dref<ffsff>::type ttt; 
-//			
-//			
-			typedef typename std::tr1::tuple_element<index-1,foreignKeysType>::type fk1type;
+			typedef typename std::tr1::tuple_element<index-1,foreignTablesType>::type foreignTableType;
+			foreignTableType foreignTable = get<index-1>(inForeignTables);
 			
 			
-			return foriengtable->primaryprimaryKeyType((fk1type*)0);
+			typedef typename std::tr1::tuple_element<index-1,foreignKeysType>::type foreignKey;
 			
 			
-	//		const fk1type  fk1= get<index-1>(fk);
-//			
-//			
-//			if(foriengtable->contains(fk1) == false)
-//		    	return false;
-			
-	//		return checkhelper<tupleforiegntype,index-1,fktype>::foreignKeyvalidatef(intupleforiegn,fk);
-			
-			
+			return foreignTable->hasPrimaryKeyType((foreignKey*)0);
 		}
 		
 		
@@ -142,16 +120,17 @@ struct tableTuple {
 	
 	
 	
-	template<typename tupleforiegntype,typename fktype>
-	struct checkhelper<tupleforiegntype,0, fktype> {
-		static bool foreignKeyvalidatef(tupleforiegntype intupleforiegn,fktype fk)
+	template<typename foreignTablesType>
+	struct validateForeignKeyHelper<foreignTablesType,0>
+	{
+		static bool validateForeignKey(foreignTablesType foreignTables,foreignKeysType inForeignKeys)
 		{
 			return true;
 			
 		}
 		
 		
-		static bool foreignKeyvalidatefType(tupleforiegntype intupleforiegn)
+		static bool validateForeignKeyType(foreignTablesType inForeignTable)
 		{
 			return true;
 			
@@ -173,20 +152,20 @@ struct tableTuple {
 	
 	
 	
-	template <typename  refrencedtabletype >
-	bool foreignKeyvalidate(refrencedtabletype & refrencedtable)
+	template <typename  foreignTablesType >
+	bool validateForeignKey(foreignTablesType & foreignTables)
 	{
-		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
-		return checkhelper<refrencedtabletype,tuplesize,foreignKeysType>::foreignKeyvalidatef(refrencedtable,foreignKeys);
+		const size_t tuplesize =tuple_size<foreignTablesType>::value;
+		return validateForeignKeyHelper<foreignTablesType,tuplesize>::validateForeignKey(foreignTables,foreignKeys);
 	}
 
 	
 	
-	template <typename  refrencedtabletype >
-	static bool foreignKeyvalidateType(refrencedtabletype & refrencedtable)
+	template <typename  foreignTablesType >
+	static bool validateForeignKeyType(foreignTablesType & foreignTables)
 	{
-		const size_t tuplesize =tuple_size<refrencedtabletype>::value;
-		return checkhelper<refrencedtabletype,tuplesize,foreignKeysType>::foreignKeyvalidatefType(refrencedtable);
+		const size_t tuplesize =tuple_size<foreignTablesType>::value;
+		return validateForeignKeyHelper<foreignTablesType,tuplesize>::validateForeignKeyType(foreignTables);
 	}
 	
 	
@@ -198,87 +177,81 @@ struct tableTuple {
 
 
 
-template <typename tableTupleType,typename tupletypeforiegntype>
-struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableReferedByP,tableForiegn<tableTupleType>
+template <typename _tableTupleType,typename __foreignTablesType>
+struct table:map<typename _tableTupleType::primaryKeyType,_tableTupleType> ,tableReferedBy,tableForiegn<_tableTupleType>
 {
 	
-	tupletypeforiegntype tupleforiegn;
-	typedef table<tableTupleType,tupletypeforiegntype> selftype;
-	typedef typename map<typename tableTupleType::primaryKeyType,tableTupleType>::iterator tablerowiter;
-	typedef map<typename tableTupleType::primaryKeyType,tableTupleType> tableype;
+	typedef __foreignTablesType foreignTablesType;
+	typedef _tableTupleType tableTupleType;
 	
-	template<typename tupleforiegntype,size_t i,typename selftypet>
-	struct setTupleReferencehelper;
+	
+	foreignTablesType foreignTables;
+	typedef table<tableTupleType,foreignTablesType> selfType;
+	typedef typename map<typename tableTupleType::primaryKeyType,tableTupleType>::iterator iterator;
+	typedef map<typename tableTupleType::primaryKeyType,tableTupleType> mapType;
+	
+	typedef typename tableTupleType::primaryKeyType primaryKeyType;	
+	template<typename _foreignTablesType,size_t index>
+	struct setForeignTableReferenceHelper;
 	
 	template<int index>
-	struct fkatindex {
-		typedef typename tuple_element<index,typename tableTupleType::foreignKeysType>::type type;
-		
-		static type getfk(tablerowiter i)
-		{
-			tableTupleType row = i->second;
-			
-			
-			return get<index>(row.foreignKeys);
-		}
-	};
-	
-	template<typename tupleforiegntype,typename selftypet>
-	struct setTupleReferencehelper<tupleforiegntype,0,selftypet> {
-		static void setTupleReference(tupleforiegntype intupleforiegn,selftypet * inself)
-		{
-			
-			
-		}
-		
-	};
-	
-	
-	
-	template<typename tupleforiegntype,size_t i,typename selftypet>
-	struct setTupleReferencehelper {
-		static void setTupleReference(tupleforiegntype intupleforiegn,selftypet * inself)
-		{
-			
-			typename std::tr1::tuple_element<i-1,tupleforiegntype>::type foriengtable = get<i-1>(inself->tupleforiegn);
-			
-			foriengtable->referset.insert(inself);
-			
-			
-			typedef typename tableTupleType::foreignKeysType fkt;
-			setTupleReferencehelper<tupleforiegntype,i-1,selftypet>::setTupleReference(intupleforiegn,inself);
-			
-			
-
-			
-		}
-		
-	};
-	
-	
-
-		
-	
-	
-	
-	
-	
-	table(tupletypeforiegntype intupleforiegn)
-	:tupleforiegn(intupleforiegn)
+	struct foreignKeyAt 
 	{
-		const size_t size=  tuple_size<tupletypeforiegntype>::value;
-		setTupleReferencehelper<tupletypeforiegntype,size,selftype >::setTupleReference(intupleforiegn,this);
+		typedef typename tuple_element<index,typename tableTupleType::foreignKeysType>::type type;
+		static type getForeignKey(iterator i)
+		{
+			const tableTupleType & tableTuple = i->second;
+			return get<index>(tableTuple.foreignKeys);
+		}
+	};
+	
+	template<typename _foreignTablesType>
+	struct setForeignTableReferenceHelper<_foreignTablesType,0> 
+	{
+		static void setForeignTableReference(_foreignTablesType intupleforiegn,selfType * inself)
+		{
+		}
 		
-		tableTupleType::foreignKeyvalidateType(intupleforiegn);
+	};
+	
+	
+	
+	template<typename _foreignTablesType,size_t i>
+	struct setForeignTableReferenceHelper 
+	{
+		static void setForeignTableReference(_foreignTablesType intupleforiegn,selfType * inself)
+		{
+			typename std::tr1::tuple_element<i-1,_foreignTablesType>::type foreignTable = get<i-1>(inself->foreignTables);
+			foreignTable->referedTables.insert(inself);
+			setForeignTableReferenceHelper<_foreignTablesType,i-1>::setForeignTableReference(intupleforiegn,inself);
+		}
+		
+	};
+	
+	
+
+		
+	
+	
+	
+	
+	
+	table(foreignTablesType inForeignTables)
+	:foreignTables(inForeignTables)
+	{
+		const size_t size=  tuple_size<foreignTablesType>::value;
+		setForeignTableReferenceHelper<foreignTablesType,size >::setForeignTableReference(inForeignTables,this);
+		
+		tableTupleType::validateForeignKeyType(inForeignTables);
 
 	
 	}
 	
-	tablerowiter findrow(typename tableTupleType::primaryKeyType key)
+	iterator findTuple(primaryKeyType key)
 	{
 		
 #if DEBUG		
-		for(tablerowiter i =tableype::begin();  i !=tableype::end(); i++)
+		for(iterator i =mapType::begin();  i !=mapType::end(); i++)
 		{
 			tableTupleType rowss=i->second;
 			
@@ -290,73 +263,61 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 #endif		
 		
 		
-		return tableype::find(key);
+		return mapType::find(key);
 	}
 	
 	
 	
-	bool contains(typename tableTupleType::primaryKeyType key)
+	bool contains(primaryKeyType key)
 	{
-		return findrow(key) != tableype::end();
+		return findTuple(key) != mapType::end();
 	}
 	
 	
 	
-	
-	
-	template<class T>
-	void OnDelete(typename T::pprimaryKeyType fk,const T &treftable,tablerowiter i)
-	{
-		tableype::erase (i);
-	} 
-	
-	
-//	template<int index>
-//	typename tuple_element<index,foriegntableTupleType>::type	getForiegKeyForIndex()
+		
 
 	
 	
-	template<class T,typename fktype>
-	bool  OnDelete(fktype fk,const T &treftable,tablerowiter i)
+	template<class _foreignTableType,typename _foreignKeyType>
+	bool  OnDelete(_foreignKeyType fk,const _foreignTableType &treftable,iterator i)
 	{
-		tableype::erase (i);
+		mapType::erase (i);
 		return true;
 	} 
 	
 	
 	
 	
-	template<typename tupleforiegntype,int index,typename _selftype>
-	struct OnDeleteHelper {
+	template<typename _foreignTablesType,int index>
+	struct OnDeleteHelper 
+	{
 		
-		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
+		static bool  OnDelete(tableForiegnBase * inForeignTable,void * foreignTableKeyPtr,_foreignTablesType  foreignTables,selfType * _self)
 		{
-			typedef typename tuple_element<index-1,tupleforiegntype>::type tt;
+			typedef typename tuple_element<index-1,_foreignTablesType>::type foreignTableType;
 			
-			tableForiegnBase*  table = static_cast<tableForiegnBase*>(get<index-1>(ft));
-			
-			//printf("sucess %x %x\n",table,deleter);
+			tableForiegnBase*  foreignTable = static_cast<tableForiegnBase*>(get<index-1>(foreignTables));
 			
 			
-			if(table == deleter)
+			
+			if(foreignTable == inForeignTable)
 			{
 				
-				for(tablerowiter i =_self->tableype::begin();  i !=_self->tableype::end(); i++)
+				for(iterator i =_self->mapType::begin();  i !=_self->mapType::end(); i++)
 				{
-					tableTupleType rowss=i->second;
 					
-					//printf("sucess\n");
 					
-					typedef typename fkatindex<index-1>::type t;
+					typedef typename foreignKeyAt<index-1>::type foreignKeyType;
 					
-					t fk0= fkatindex<index-1>::getfk(i);
+					foreignKeyType foreignKey = foreignKeyAt<index-1>::getForeignKey(i);
 					
-					t converted = *(static_cast<t*>(fk)); 
+					foreignKeyType foreignTableKey = *(static_cast<foreignKeyType*>(foreignTableKeyPtr)); 
 					
-					if(converted==fk0)
+					if(foreignTableKey == foreignKey)
 					{
 						
-						if(_self->OnDelete(converted,get<index-1>(ft),i) ==false)
+						if(_self->OnDelete(foreignTableKey,get<index-1>(foreignTables),i) ==false)
 							return false;
 						
 						break;
@@ -371,7 +332,7 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 			
 			
 			
-			return OnDeleteHelper<tupletypeforiegntype,index-1,selftype >::OnDeleteinRefered(deleter,fk,ft,_self);
+			return OnDeleteHelper<foreignTablesType,index-1 >::OnDelete(foreignTable,foreignTableKeyPtr,foreignTables,_self);
 
 			
 		}
@@ -380,10 +341,13 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 	
 	
 	
-	template<typename tupleforiegntype,typename _selftype>
-	struct OnDeleteHelper<tupleforiegntype,0,_selftype> {
+	
+	
+	template<typename _foreignTablesType>
+	struct OnDeleteHelper<_foreignTablesType,0> 
+	{
 		
-		static bool  OnDeleteinRefered(tableForiegnBase * deleter,void * fk,tupleforiegntype  ft,_selftype * _self)
+		static bool  OnDelete(tableForiegnBase * inForeignTable,void * foreignTableKeyPtr,_foreignTablesType  foreignTables,selfType * _self)
 		{
 			return true;
 		}
@@ -392,14 +356,10 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 	
 	
 	
-	virtual bool OnDeleteinRefered(tableForiegnBase * deleter,void * fk)
+	virtual bool OnDelete(tableForiegnBase * inForeignTable,void * inForeignKeyPtr)
 	{
-		
-		
-		const size_t size=  tuple_size<tupletypeforiegntype>::value;
-		return OnDeleteHelper<tupletypeforiegntype,size,selftype >::OnDeleteinRefered(deleter,fk,tupleforiegn,this);
-		
-		
+		const size_t size=  tuple_size<foreignTablesType>::value;
+		return OnDeleteHelper<foreignTablesType,size >::OnDelete(inForeignTable,inForeignKeyPtr,foreignTables,this);
 		return true;
 	}
 	
@@ -409,25 +369,22 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 	
 	
 	
-	bool insert(tableTupleType inrow)
+	bool insert(tableTupleType tableTuple)
 	{
 		
-		if(inrow.validate() == false)
+		if(tableTuple.validate() == false)
 			return false;
 		
 		
-		
-		
-		
-		pair<tablerowiter,bool> a = tableype::insert (make_pair(inrow.primaryKey, inrow));
+		pair<iterator,bool> a = mapType::insert (make_pair(tableTuple.primaryKey, tableTuple));
 		
 		if(a.second==false)
 			return false;
 		
 		
-		if(inrow.foreignKeyvalidate(tupleforiegn) == false)
+		if(tableTuple.validateForeignKey(foreignTables) == false)
 		{
-			tableype::erase(inrow.primaryKey);
+			mapType::erase(tableTuple.primaryKey);
 			return false;
 		}	
 		
@@ -438,21 +395,20 @@ struct table:map<typename tableTupleType::primaryKeyType,tableTupleType> ,tableR
 	
 	bool deleteKey(typename tableTupleType::primaryKeyType key)
 	{
-		//assert(refreningtable);
 		
 		assert(contains(key));
 		
-		typedef typename std::set<tableReferedByP * >::iterator referediter;
+		typedef typename std::set<tableReferedBy * >::iterator referediter;
 		
-		for(referediter i= tableForiegn<tableTupleType>::referset.begin(); i!= tableForiegn<tableTupleType>::referset.end(); i++)
+		for(referediter i= tableForiegn<tableTupleType>::referedTables.begin(); i!= tableForiegn<tableTupleType>::referedTables.end(); i++)
 		{
-			if((*i)->OnDeleteinRefered(this,&key) == false)
+			if((*i)->OnDelete(this,&key) == false)
 				return false;
 		}
 		
-		tablerowiter k=findrow(key);
-		if(k!=tableype::end())
-			tableype::erase (k);
+		iterator k=findTuple(key);
+		if(k!=mapType::end())
+			mapType::erase (k);
 
 		return true;
 	}

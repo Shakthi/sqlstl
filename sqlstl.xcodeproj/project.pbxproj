@@ -6,6 +6,20 @@
 	objectVersion = 45;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		530A0DC914D91D9F0038309D /* Doxygen */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 530A0DDF14D91DF60038309D /* Build configuration list for PBXAggregateTarget "Doxygen" */;
+			buildPhases = (
+				530A0DC814D91D9F0038309D /* ShellScript */,
+			);
+			dependencies = (
+			);
+			name = Doxygen;
+			productName = Doxygen;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		50149BDA09E781A5002DEE6A /* sqlstl.h in Headers */ = {isa = PBXBuildFile; fileRef = 50149BD909E781A5002DEE6A /* sqlstl.h */; };
 		5073E0CB09E734E500EC74B6 /* sqlstl.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5073E0C409E734A800EC74B6 /* sqlstl.cp */; };
@@ -33,6 +47,7 @@
 		53A05E4214BAA37F002F0500 /* test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test; sourceTree = BUILT_PRODUCTS_DIR; };
 		53A05E4614BAA393002F0500 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = test.h; sourceTree = "<group>"; };
 		53A05E4714BAA393002F0500 /* test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test.cpp; sourceTree = "<group>"; };
+		53B6312A14D903D900EB762B /* doxygen-xcode-script.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "doxygen-xcode-script.sh"; sourceTree = "<group>"; };
 		D2AAC09D05546B4700DB518D /* libsqlstl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsqlstl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -86,6 +101,7 @@
 		08FB77ACFE841707C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				53B6312A14D903D900EB762B /* doxygen-xcode-script.sh */,
 				32BAE0B70371A74B00C91783 /* sqlstl_Prefix.pch */,
 				50149BD909E781A5002DEE6A /* sqlstl.h */,
 				50B2938909F016FC00694E55 /* sqlstlPriv.h */,
@@ -174,9 +190,26 @@
 			targets = (
 				D2AAC09C05546B4700DB518D /* sqlstl */,
 				53A05E4114BAA37F002F0500 /* test */,
+				530A0DC914D91D9F0038309D /* Doxygen */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		530A0DC814D91D9F0038309D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here\n/Volumes/Development/TestProjects/sqlstl/doxygen-xcode-script.sh";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		53A05E3F14BAA37F002F0500 /* Sources */ = {
@@ -263,6 +296,27 @@
 			};
 			name = Release;
 		};
+		530A0DCA14D91D9F0038309D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = Doxygen;
+			};
+			name = Debug;
+		};
+		530A0DCB14D91D9F0038309D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = Doxygen;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 		53A05E4414BAA380002F0500 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -274,6 +328,10 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = "-Wall";
+				OTHER_CPLUSPLUSFLAGS = (
+					"-ftemplate-depth-25",
+					"$(OTHER_CFLAGS)",
+				);
 				PREBINDING = NO;
 				PRODUCT_NAME = test;
 			};
@@ -312,6 +370,15 @@
 			buildConfigurations = (
 				1DEB916508733D950010E9CD /* Debug */,
 				1DEB916608733D950010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		530A0DDF14D91DF60038309D /* Build configuration list for PBXAggregateTarget "Doxygen" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				530A0DCA14D91D9F0038309D /* Debug */,
+				530A0DCB14D91D9F0038309D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
