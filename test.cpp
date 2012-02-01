@@ -458,7 +458,8 @@ struct table:map<typename _tableTupleType::primaryKeyType,_tableTupleType> ,tabl
 
 
 template <typename _tableTupleType>
-struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,_tableTupleType> ,tableReferedBy,tableForiegn<_tableTupleType>
+struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,_tableTupleType> 
+,tableReferedBy,tableForiegn<_tableTupleType>
 {
 	
 	typedef _tableTupleType tableTupleType;
@@ -511,7 +512,11 @@ struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,
 	
 	
 	
-	
+	virtual bool OnDelete(tableForiegnBase * deleter,void * foreignKeyPtr)
+	{
+		return false;
+	}
+
 	
 	
 	table()
@@ -549,95 +554,7 @@ struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,
 	
 	
 	
-	
-	
-	
-	
-	template<class _foreignTableType,typename _foreignKeyType>
-	bool  OnDelete(_foreignKeyType fk,const _foreignTableType &treftable,iterator i)
-	{
-		mapType::erase (i);
-		return true;
-	} 
-	
-	
-	
-	
-	template<typename _foreignTablesType,int index>
-	struct OnDeleteHelper 
-	{
 		
-		static bool  OnDelete(tableForiegnBase * inForeignTable,void * foreignTableKeyPtr,_foreignTablesType  foreignTables,selfType * _self)
-		{
-			typedef typename tuple_element<index-1,_foreignTablesType>::type foreignTableType;
-			
-			tableForiegnBase*  foreignTable = static_cast<tableForiegnBase*>(get<index-1>(foreignTables));
-			
-			
-			
-			if(foreignTable == inForeignTable)
-			{
-				
-				for(iterator i =_self->mapType::begin();  i !=_self->mapType::end(); i++)
-				{
-					
-					
-					typedef typename foreignKeyAt<index-1>::type foreignKeyType;
-					
-					foreignKeyType foreignKey = foreignKeyAt<index-1>::getForeignKey(i);
-					
-					foreignKeyType foreignTableKey = *(static_cast<foreignKeyType*>(foreignTableKeyPtr)); 
-					
-					if(foreignTableKey == foreignKey)
-					{
-						
-						if(_self->OnDelete(foreignTableKey,get<index-1>(foreignTables),i) ==false)
-							return false;
-						
-						break;
-					}
-					
-				}	
-				
-				
-				
-			}
-			
-			
-			
-			
-			return OnDeleteHelper<foreignTablesType,index-1 >::OnDelete(foreignTable,foreignTableKeyPtr,foreignTables,_self);
-			
-			
-		}
-		
-	};
-	
-	
-	
-	
-	
-	template<typename _foreignTablesType>
-	struct OnDeleteHelper<_foreignTablesType,0> 
-	{
-		
-		static bool  OnDelete(tableForiegnBase * inForeignTable,void * foreignTableKeyPtr,_foreignTablesType  foreignTables,selfType * _self)
-		{
-			return true;
-		}
-		
-	};
-	
-	
-	
-	virtual bool OnDelete(tableForiegnBase * inForeignTable,void * inForeignKeyPtr)
-	{
-		const size_t size=  tuple_size<foreignTablesType>::value;
-		return OnDeleteHelper<foreignTablesType,size >::OnDelete(inForeignTable,inForeignKeyPtr,foreignTables,this);
-		return true;
-	}
-	
-	
 	
 	
 	
@@ -655,12 +572,6 @@ struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,
 		if(a.second==false)
 			return false;
 		
-		
-		if(tableTuple.validateForeignKey(foreignTables) == false)
-		{
-			mapType::erase(tableTuple.primaryKey);
-			return false;
-		}	
 		
 		return true;
 	}
@@ -730,16 +641,16 @@ struct Score2:tableTuple<int,tuple<int> > {
 int main()
 {
 
-	table<Player> b();
+	table<Player> b;
 	
 	
-	table<Score2,tuple<tableForiegn<Player2>* > > s(make_tuple(&b));
+	table<Score2,tuple<tableForiegn<Player>* > > s(make_tuple(&b));
 
 
 	
-	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
-	SHOULD_PASS(b.insert(Player2(4,"shakthi")));
-	SHOULD_PASS(b.insert(Player2(6,"shakthi")));
+	SHOULD_PASS(b.insert(Player(1,"shakthi")));
+	SHOULD_PASS(b.insert(Player(4,"shakthi")));
+	SHOULD_PASS(b.insert(Player(6,"shakthi")));
 	
 	
 	SHOULD_PASS(s.insert(Score2(100,1)));
