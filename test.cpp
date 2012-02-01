@@ -607,6 +607,22 @@ struct table<_tableTupleType,void>:map<typename _tableTupleType::primaryKeyType,
 
 
 
+typedef tuple<> tableTuplei;
+
+struct Player2:tableTuple<int,tableTuplei > {
+	int playerid()
+	{
+		return primaryKey;
+	}
+	
+	Player2(int playerid,string name)
+	:tableTuple<int,tableTuplei>(playerid,make_tuple()),name(name)
+	{}
+	string name;
+};
+
+
+
 
 struct Player:tableTuple<int> {
 	int playerid()
@@ -640,17 +656,26 @@ struct Score2:tableTuple<int,tuple<int> > {
 
 int main()
 {
-
-	table<Player> b;
+	
+	table<Player2,tuple<> > b(make_tuple());
 	
 	
-	table<Score2,tuple<tableForiegn<Player>* > > s(make_tuple(&b));
-
-
+	table<Score2,tuple<tableForiegn<Player2>* > > s(make_tuple(&b));
 	
-	SHOULD_PASS(b.insert(Player(1,"shakthi")));
-	SHOULD_PASS(b.insert(Player(4,"shakthi")));
-	SHOULD_PASS(b.insert(Player(6,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(4,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(6,"shakthi")));
+	
+	
+//	table<Player> b;
+//	
+//	
+//	table<Score2,tuple<tableForiegn<Player>* > > s(make_tuple(&b));
+//	
+//	SHOULD_PASS(b.insert(Player(1,"shakthi")));
+//	SHOULD_PASS(b.insert(Player(4,"shakthi")));
+//	SHOULD_PASS(b.insert(Player(6,"shakthi")));
+//	
 	
 	
 	SHOULD_PASS(s.insert(Score2(100,1)));
