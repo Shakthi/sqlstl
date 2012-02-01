@@ -650,8 +650,108 @@ struct Score2:tableTuple<int,tuple<int> > {
 
 
 
+template<typename tabletype,typename _Function>
+struct tableview 
+{
+	 const tabletype & atable;
+	
+	_Function fun;
+	
+	tableview ( tabletype & inTable,_Function infun )
+	:atable(inTable),fun(infun)
+	{
+	
+	}
+	
+	struct tableview_iterator:tabletype::const_iterator {
+		typedef tableview_iterator                _Self;
+		typedef typename tabletype::const_iterator baseIterator;
+		typedef std::forward_iterator_tag    iterator_category;
+			
+		typedef typename baseIterator::difference_type   difference_type;
+		typedef typename baseIterator::pointer   pointer;
+		typedef typename baseIterator::reference   reference;	
+		baseIterator baseend;	
+		
+		_Function _fun;
+		
+			tableview_iterator()
+			: baseIterator() { }
+			
+			
+			tableview_iterator(baseIterator __x,baseIterator enditer,_Function inFun)
+			: baseIterator(__x),baseend(enditer),_fun(inFun) { }
+			
+		
+			bool valid()
+			{
+				return _fun((*this)->second);
+			}
+
+		
+			void advanceOver()
+			{
+				while(*this != baseend && valid()== false  )
+				{
+					baseIterator::operator++();
+				}	
+
+			
+			}
+			
+		
+			_Self&
+			operator++()
+			{
+				baseIterator::operator++();
+				advanceOver();	
+				
+				return *this;
+			}
+		
+			
+			_Self
+			operator++(int)
+			{
+				_Self __tmp = *this;
+				_Self::operator++();
+				return __tmp;
+			}
+//			
+	
+	};
+	
+	
+	typedef  tableview_iterator iterator;
+
+	iterator begin()const
+	{
+		tableview_iterator i = tableview_iterator(atable.begin(),atable.end(),fun);
+		i.advanceOver();
+		return i;
+	
+	}
+	
+	
+	iterator end()const
+	{
+		return tableview_iterator(atable.end(),atable.end(),fun);
+		
+	}
+	
+
+};
 
 
+
+
+
+
+bool  nameequaltoshakthi(const Player2 & invalue)
+{
+
+	return invalue.name == "shakthi";
+}
 
 
 int main()
@@ -663,19 +763,19 @@ int main()
 	table<Score2,tuple<tableForiegn<Player2>* > > s(make_tuple(&b));
 	
 	SHOULD_PASS(b.insert(Player2(1,"shakthi")));
-	SHOULD_PASS(b.insert(Player2(4,"shakthi")));
-	SHOULD_PASS(b.insert(Player2(6,"shakthi")));
+	SHOULD_PASS(b.insert(Player2(4,"ganesh")));
+	SHOULD_PASS(b.insert(Player2(6,"prasad")));
 	
 	
-//	table<Player> b;
-//	
-//	
-//	table<Score2,tuple<tableForiegn<Player>* > > s(make_tuple(&b));
-//	
-//	SHOULD_PASS(b.insert(Player(1,"shakthi")));
-//	SHOULD_PASS(b.insert(Player(4,"shakthi")));
-//	SHOULD_PASS(b.insert(Player(6,"shakthi")));
-//	
+	tableview<table<Player2,tuple<> >,bool (*)(const Player2& )> view(b,nameequaltoshakthi);
+	
+	typedef  tableview<table<Player2,tuple<> >,bool (*)(const Player2 &)>::iterator titer;
+	 
+	
+	for (titer i= view.begin(); i!= view.end(); i++) {
+
+	}
+	
 	
 	
 	SHOULD_PASS(s.insert(Score2(100,1)));
