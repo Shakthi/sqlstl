@@ -1,0 +1,10 @@
+This is an attempt to implementing FEATURES of sql in CLIENT side. 
+
+However,Unlike SQLite, stlsql does not use sql (structured query language) or any other language for using it(querying). 
+
+Stlsql developed(developing) using c++, especially with  stl, template meta programing, veridic template(planed for future) . Since sql is not involved here, no binding code is necessary to use it.
+
+
+This project is in very early stage. 
+
+ 
