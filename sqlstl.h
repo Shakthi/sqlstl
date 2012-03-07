@@ -643,7 +643,7 @@ struct tableview
 		: baseIterator(__x),baseend(enditer),_fun(inFun) { }
 		
 		
-		bool valid()
+		bool valid()const
 		{
 			return _fun((*this)->second);
 		}

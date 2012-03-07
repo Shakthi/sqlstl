@@ -81,7 +81,7 @@ int main()
 	
 	
 	
-	
+	//creates view that interates wih the player table iterates rows with name==shakhti
 	tableview<table<Player>,bool (*)(const Player& )> view(b,nameequaltoshakthi);
 	
 	typedef  tableview<table<Player>,bool (*)(const Player &)>::iterator titer;
@@ -89,7 +89,7 @@ int main()
 	
 	for (titer i= view.begin(); i!= view.end(); i++) {
 		
-		std::cout << "Playerid:"<<i->second.playerid() <<" Score:"<<i->second.name;
+		std::cout << "Playerid:"<<i->second.playerid() <<" name:"<<i->second.name;
 
 	}
 	
