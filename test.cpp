@@ -81,7 +81,7 @@ int main()
 	
 	
 	
-	//creates view that interates wih the player table iterates rows with name==shakhti
+	//creates view based on  the player table; iterates rows with name==shakhti
 	tableview<table<Player>,bool (*)(const Player& )> view(b,nameequaltoshakthi);
 	
 	typedef  tableview<table<Player>,bool (*)(const Player &)>::iterator titer;
