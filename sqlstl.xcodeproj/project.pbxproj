@@ -207,7 +207,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# shell script goes here\n/Volumes/Development/TestProjects/sqlstl/doxygen-xcode-script.sh";
+			shellScript = "# shell script goes here\n./doxygen-xcode-script.sh";
 		};
 /* End PBXShellScriptBuildPhase section */
 
