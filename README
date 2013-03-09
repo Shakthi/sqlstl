@@ -1,10 +1,8 @@
-This is an attempt to implementing FEATURES of sql in CLIENT side. 
+Do you want to create a database for your application? Is it little bit more complex to use good old struct and arrays?
 
-However,Unlike SQLite, stlsql does not use sql (structured query language) or any other language for using it(querying). 
-
-Stlsql developed(developing) using c++, especially with  stl, template meta programing, veridic template(planed for future) . Since sql is not involved here, no binding code is necessary to use it.
+Sql? Sqlite? -No way. Whose gona learn new language and do some crapy binding.
 
 
-This project is in very early stage. 
+You can use c++ templates to emulate tables/views, primary key, foreign key or you can use  SQLSTL
 
- 
+
